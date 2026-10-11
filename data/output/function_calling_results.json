@@ -3,16 +3,16 @@
     "prompt": "What is the sum of 2 and 3?",
     "name": "fn_add_numbers",
     "parameters": {
-      "a": 2.0,
-      "b": 3.0
+      "a": 2,
+      "b": 3
     }
   },
   {
     "prompt": "What is the sum of 265 and 345?",
     "name": "fn_add_numbers",
     "parameters": {
-      "a": 265.0,
-      "b": 345.0
+      "a": 265,
+      "b": 345
     }
   },
   {
@@ -47,14 +47,14 @@
     "prompt": "What is the square root of 16?",
     "name": "fn_get_square_root",
     "parameters": {
-      "a": 16.0
+      "a": 16
     }
   },
   {
     "prompt": "Calculate the square root of 144",
     "name": "fn_get_square_root",
     "parameters": {
-      "a": 144.0
+      "a": 144
     }
   },
   {
@@ -62,7 +62,7 @@
     "name": "fn_substitute_string_with_regex",
     "parameters": {
       "source_string": "Hello 34 I'm 233 years old",
-      "regex": "\\d+\\s+\\d+\\s+\\d+\\s+\\d+\\s+\\d+\\s+\\d+\\s+\\d+\\s+\\d+\\s+\\d+\\s+\\d+\\",
+      "regex": "\\d+",
       "replacement": "NUMBERS"
     }
   },
@@ -71,8 +71,8 @@
     "name": "fn_substitute_string_with_regex",
     "parameters": {
       "source_string": "Programming is fun",
-      "regex": "[aeiouAEIOU]}}. заменить все буквы на ",
-      "replacement": "asterisks"
+      "regex": "[aeiouAEIOU]",
+      "replacement": "*"
     }
   },
   {
@@ -80,7 +80,7 @@
     "name": "fn_substitute_string_with_regex",
     "parameters": {
       "source_string": "The cat sat on the mat with another cat",
-      "regex": "cat$|dog$|cat$|dog$|cat$|dog$|cat$|dog$|cat$|dog$|cat$|dog$|cat$|dog$|cat$|dog$|cat$|dog$|cat$|dog",
+      "regex": "cat",
       "replacement": "dog"
     }
   }

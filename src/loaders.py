@@ -6,7 +6,10 @@ from pydantic import ValidationError
 
 from function_def import FunctionsDefinition
 from io_models import PromptInputs
-from exceptions import InputFileError
+
+
+class InputFileError(Exception):
+    """Raised when an input file is missing, malformed, or fails validation."""
 
 
 def _load_json(path: str) -> object:
@@ -25,7 +28,8 @@ def load_functions_definition(path: str) -> FunctionsDefinition:
     try:
         return FunctionsDefinition.model_validate(data)
     except ValidationError as exc:
-        raise InputFileError(f"Invalid function definitions in {path}: {exc}") from exc
+        raise InputFileError(
+            f"Invalid function definitions in {path}: {exc}") from exc
 
 
 def load_prompts(path: str) -> PromptInputs:

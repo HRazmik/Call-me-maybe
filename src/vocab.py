@@ -22,7 +22,9 @@ def _gpt2_bytes_to_unicode() -> dict[int, str]:
     return dict(zip(bs, (chr(c) for c in cs)))
 
 
-_UNICODE_TO_BYTE: dict[str, int] = {v: k for k, v in _gpt2_bytes_to_unicode().items()}
+_UNICODE_TO_BYTE: dict[str, int] = {
+    v: k for k, v in _gpt2_bytes_to_unicode().items()
+    }
 
 
 def render_token(token_str: str) -> str:
@@ -49,13 +51,26 @@ class Vocab:
             vocab_path: path returned by
             Small_LLM_Model.get_path_to_vocab_file().
         """
-        raw: dict[str, int] = json.loads(Path(vocab_path).read_text(encoding="utf-8"))
+        raw: dict[str, int] = json.loads(
+            Path(vocab_path).read_text(encoding="utf-8"))
         self.str_to_id: dict[str, int] = raw
         self.id_to_str: dict[int, str] = {v: k for k, v in raw.items()}
         self.id_to_rendered: dict[int, str] = {
             token_id: render_token(token_str)
             for token_id, token_str in self.id_to_str.items()
             }
+        self.quote_id: int = next(
+            t for t, s in self.id_to_rendered.items() if s == '"')
+        self.string_close_votes: list[int] = [
+            t for t, s in self.id_to_rendered.items() if s.startswith('"')
+        ]
+        self.number_close_votes: list[int] = [
+            t for t, s in self.id_to_rendered.items() if s and s[0] in ",}]\n"
+        ]
+        self.number_digit_ids: list[int] = [
+            t for t, s in self.id_to_rendered.items()
+            if s and all(c in "0123456789." for c in s)
+        ]
 
     def token_str(self, token_id: int) -> str:
         """Return the string for a given token id."""

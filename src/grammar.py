@@ -110,7 +110,6 @@ class GrammarState:
                     self.stack.append(_Frame(ContainerType.OBJECT,
                                              State.EXPECT_KEY))
                 new_state = State.EXPECT_KEY if not dry_run else state
-                # handled below
                 if dry_run:
                     return True
                 self.top_state = State.EXPECT_KEY
@@ -162,7 +161,6 @@ class GrammarState:
                 if not dry_run:
                     self.top_state = State.STRING_ESCAPE
                     self._return_after_escape = State.IN_KEY_STRING
-                    # type: ignore[attr-defined]
                 return True
             return ch != '"'  # any char except an unescaped quote
 
@@ -175,7 +173,6 @@ class GrammarState:
                 if not dry_run:
                     self.top_state = State.STRING_ESCAPE
                     self._return_after_escape = State.IN_VALUE_STRING
-                    # type: ignore[attr-defined]
                 return True
             return True  # any other char is fine inside a string
 
@@ -183,7 +180,6 @@ class GrammarState:
             if ch in ('"', "\\", "/", "n", "t", "r", "b", "f", "u"):
                 if not dry_run:
                     self.top_state = self._return_after_escape
-                    # type: ignore[attr-defined]
                 return True
             return False
 
