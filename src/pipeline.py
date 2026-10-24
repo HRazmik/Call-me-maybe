@@ -30,7 +30,7 @@ def _escape_for_json_string(text: str) -> str:
     """
     Escape a raw string so it's safe to splice into a JSON string literal.
     """
-    return json.dumps(text)[1:-1]  # json.dumps gives '"..."'; strip the quotes
+    return json.dumps(text)[1:-1]
 
 
 def _format_functions_for_context(functions: FunctionsDefinition) -> str:
@@ -52,8 +52,7 @@ def process_prompt(
     prompt_text: str,
 ) -> FunctionCallResult:
     """Run the full constrained pipeline for a single prompt."""
-    # 1. Build the context the model sees: the natural-language prompt,
-    #    followed by the start of the JSON object we're constructing.
+
     functions_context = _format_functions_for_context(functions)
     context_text = (
         "<|im_start|>system\n"
@@ -73,24 +72,15 @@ def process_prompt(
     input_ids = encode_prompt(model, context_text)
     grammar = GrammarState()
 
-    # 2. Inject the fixed skeleton up through the prompt field - no model
-    #    call needed, we already know this text.
     escaped_prompt = _escape_for_json_string(prompt_text)
     inject_literal(model, vocab, input_ids, grammar, '{"prompt":"')
     inject_literal(model, vocab, input_ids, grammar, escaped_prompt)
     inject_literal(model, vocab, input_ids, grammar, '","name":"')
-
-    # 3. Let the model choose the function (scored, not heuristic).
     name_pool = build_name_pool(vocab, [fn.name for fn in functions.root])
     chosen_fn, name_text = choose_function(
         model, vocab, functions, input_ids, name_pool)
     grammar.commit_token(name_text)
-    # 4. Inject the chosen name + move into parameters.
-    # inject_literal(model, vocab, input_ids, grammar, chosen_fn.name)
     inject_literal(model, vocab, input_ids, grammar, '","parameters":{')
-
-    # 5. For each declared parameter, inject its key, then constrained-
-    #    generate its value based on declared type.
     parameters: dict[str, object] = {}
     param_items = list(chosen_fn.parameters.items())
     for i, (param_name, param_spec) in enumerate(param_items):
@@ -99,9 +89,7 @@ def process_prompt(
 
         kind = _TYPE_TO_GENERATOR_KIND.get(param_spec.type)
         if kind is None:
-            # array/object parameter values aren't supported by the current
-            # type-restricted generator - flagged as a known gap rather than
-            # silently producing wrong output.
+
             raise NotImplementedError(
                 f"Parameter type {param_spec.type!r} not yet supported "
                 f"for constrained value generation (param: {param_name!r})"
@@ -110,7 +98,7 @@ def process_prompt(
 
         raw_value_text = generate_value_for_type(
             model, vocab, input_ids, kind, string_pool)
-        print(raw_value_text)
+        # print(raw_value_text)
         for ch in raw_value_text:
             grammar.advance(ch)
         parameters[param_name] = json.loads(raw_value_text)
@@ -118,7 +106,6 @@ def process_prompt(
         if i < len(param_items) - 1:
             inject_literal(model, vocab, input_ids, grammar, ",")
 
-    # 6. Close parameters object and outer object.
     inject_literal(model, vocab, input_ids, grammar, "}}")
 
     return FunctionCallResult(
@@ -149,9 +136,6 @@ def run_pipeline(
             print("Warning: failed to process prompt ",
                   f"{prompt_input.prompt!r}: {exc}")
         except Exception as exc:
-            # noqa: BLE001 - replace with narrower types once known
-            # graceful per-prompt failure, per the "never crash" requirement -
-            # log and continue rather than aborting the whole batch
             print("Unexpected error: failed to process prompt",
                   f"{prompt_input.prompt!r}: {exc}")
     return results

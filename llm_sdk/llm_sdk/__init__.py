@@ -80,7 +80,7 @@ class Small_LLM_Model:
         return torch.tensor([ids], device=self._device, dtype=torch.long)
 
 
-    def decode(self, ids: torch.Tensor | list[int]) -> str:
+    def decode(self, ids: torch.Tensor | list[int]) -> str | list[str]:
         """Inverse of :py:meth:`encode`. Removes special tokens."""
         if isinstance(ids, torch.Tensor):
             ids = ids.tolist()

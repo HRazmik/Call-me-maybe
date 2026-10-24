@@ -1,9 +1,8 @@
 """Vocab loading: bidirectional mapping between token IDs and token strings."""
 import json
 from pathlib import Path
+from pydantic import BaseModel, PrivateAttr
 
-
-# src/llm/vocab.py
 
 def _gpt2_bytes_to_unicode() -> dict[int, str]:
     """The standard GPT-2 byte<->printable-unicode mapping table."""
@@ -35,14 +34,20 @@ def render_token(token_str: str) -> str:
         raw_bytes = bytes(_UNICODE_TO_BYTE[ch] for ch in token_str)
         return raw_bytes.decode("utf-8")
     except (KeyError, UnicodeDecodeError):
-        # a lone token can be an incomplete multi-byte UTF-8 sequence
-        # (split across adjacent tokens) - fall back to raw text for now
         return token_str
 
 
-class Vocab:
+class Vocab(BaseModel):
     """Bidirectional token_id <-> token_string
     mapping loaded from the SDK's vocab file."""
+    _str_to_id: dict[str, int] = PrivateAttr()
+    _id_to_str: dict[int, str] = PrivateAttr()
+
+    _id_to_rendered: dict[int, str] = PrivateAttr()
+    _quote_id: int = PrivateAttr()
+    _string_close_votes: list[int] = PrivateAttr()
+    _number_close_votes: list[int] = PrivateAttr()
+    _number_digit_ids: list[int] = PrivateAttr()
 
     def __init__(self, vocab_path: str) -> None:
         """Load the vocab file.
@@ -53,36 +58,55 @@ class Vocab:
         """
         raw: dict[str, int] = json.loads(
             Path(vocab_path).read_text(encoding="utf-8"))
-        self.str_to_id: dict[str, int] = raw
-        self.id_to_str: dict[int, str] = {v: k for k, v in raw.items()}
-        self.id_to_rendered: dict[int, str] = {
+        self._str_to_id: dict[str, int] = raw
+        self._id_to_str: dict[int, str] = {v: k for k, v in raw.items()}
+        self._id_to_rendered: dict[int, str] = {
             token_id: render_token(token_str)
-            for token_id, token_str in self.id_to_str.items()
+            for token_id, token_str in self._id_to_str.items()
             }
-        self.quote_id: int = next(
-            t for t, s in self.id_to_rendered.items() if s == '"')
-        self.string_close_votes: list[int] = [
-            t for t, s in self.id_to_rendered.items() if s.startswith('"')
+        self._quote_id: int = next(
+            t for t, s in self._id_to_rendered.items() if s == '"')
+        self._string_close_votes: list[int] = [
+            t for t, s in self._id_to_rendered.items() if s.startswith('"')
         ]
-        self.number_close_votes: list[int] = [
-            t for t, s in self.id_to_rendered.items() if s and s[0] in ",}]\n"
+        self._number_close_votes: list[int] = [
+            t for t, s in self._id_to_rendered.items() if s and s[0] in ",}]\n"
         ]
-        self.number_digit_ids: list[int] = [
-            t for t, s in self.id_to_rendered.items()
+        self._number_digit_ids: list[int] = [
+            t for t, s in self._id_to_rendered.items()
             if s and all(c in "0123456789." for c in s)
         ]
 
-    def token_str(self, token_id: int) -> str:
-        """Return the string for a given token id."""
-        return self.id_to_str[token_id]
+    @property
+    def id_to_rendered(self) -> dict[int, str]:
+        return self._id_to_rendered
+
+    @property
+    def quote_id(self) -> int:
+        return self._quote_id
+
+    @property
+    def string_close_votes(self) -> list[int]:
+        return self._string_close_votes
+
+    @property
+    def number_close_votes(self) -> list[int]:
+        return self._number_close_votes
+
+    @property
+    def number_digit_ids(self) -> list[int]:
+        return self._number_digit_ids
 
     def rendered(self, token_id: int) -> str:
         """The actual text this token contributes when appended."""
-        return self.id_to_rendered[token_id]
+        return self._id_to_rendered[token_id]
+
+    def token_str(self, token_id: int) -> str:
+        return self._id_to_str[token_id]
 
     def token_id(self, token: str) -> int:
         """Return the id for a given token string."""
-        return self.str_to_id[token]
+        return self._str_to_id[token]
 
     def __len__(self) -> int:
-        return len(self.id_to_str)
+        return len(self._id_to_str)

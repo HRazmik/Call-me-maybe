@@ -1,4 +1,3 @@
-"""CLI entrypoint for the function-calling tool."""
 import argparse
 import sys
 
@@ -39,6 +38,7 @@ def main() -> int:
 
     results = run_pipeline(model, vocab, functions, prompts)
     write_results(results, args.output)
+    print("Done!")
     return 0
 
 

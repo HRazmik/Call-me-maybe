@@ -8,20 +8,23 @@ run:
 	${UV} run python -m src
 
 debug:
-	${UV} run main.py
+	${UV} run python -m pdb main.py
 
 clean:
 	rm -rf __pycache__ \
 		   .pytest_cache \
 		   .mypy_cache \
+	rm -rf src/__pycache__ \
+		   src/.mypy_cache \
+		   src/*.egg-info
 
 lint: flake
 	mypy ${SRC} ${MYPY_FLAGS}
 
-lint-strtict: flake
+lint-strict: flake
 	mypy ${SRC} --strict
 
 flake:
 	flake8 ${SRC}
 
-.PHONY: install run debug clean lint lint-strtict flake
+.PHONY: install run debug clean lint lint-strict flake

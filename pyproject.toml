@@ -10,12 +10,10 @@ dependencies = [
     "llm_sdk"
 ]
 
-[project.scripts]
-call-me-maybe = "call_me_maybe:main"
-
-[build-system]
-requires = ["uv_build>=0.12.5,<0.13.0"]
-build-backend = "uv_build"
+[[tool.mypy.overrides]]
+module = "llm_sdk"
+follow_imports = "skip"
+ignore_missing_imports = true
 
 [tool.uv.sources]
 llm_sdk = { path = "llm_sdk" }
